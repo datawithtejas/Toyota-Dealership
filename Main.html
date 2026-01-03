@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toyota Dealer Connect | Dashboard</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #f4f5f7;
+            --bg-card: #ffffff;
+            
+            /* Toyota Brand Palette */
+            --toyota-red: #EB0A1E;
+            --toyota-black: #000000;
+            --toyota-gray: #58595b;
+            --toyota-dark-gray: #333333;
+            
+            /* UI Semantics */
+            --primary: var(--toyota-red);
+            --secondary: var(--toyota-black);
+            --accent: #ff4d5a;
+            
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #d90429;
+            
+            --text-main: #1a1a1a;
+            --text-muted: #6c757d;
+            --border-color: rgba(0, 0, 0, 0.08);
+            --input-bg: #f8f9fa;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Roboto', sans-serif; /* Toyota uses Helvetica/Roboto style fonts */
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: #ffffff;
+            border-bottom: 3px solid var(--toyota-red);
+            padding: 1rem 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .navbar-brand {
+            font-weight: 900;
+            color: var(--toyota-black) !important;
+            letter-spacing: -0.5px;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+        }
+
+        /* Cards */
+        .glass-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px; /* Sharper corners for automotive feel */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+            border-color: rgba(235, 10, 30, 0.2);
+        }
+
+        /* Showroom Spotlight Graphic */
+        .showroom-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+            color: white;
+            border: none;
+        }
+        
+        .showroom-graphic {
+            position: absolute;
+            right: -20px;
+            top: -20px;
+            opacity: 0.1;
+            font-size: 10rem;
+            transform: rotate(-15deg);
+        }
+
+        /* Typography */
+        h2, h4, h5 { font-weight: 700; letter-spacing: -0.5px; }
+        .text-toyota-red { color: var(--toyota-red); }
+        .fw-black { font-weight: 900; }
+        
+        /* Stat Icons */
+        .stat-icon-box {
+            width: 48px; height: 48px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            background: #f8f9fa;
+            color: var(--toyota-black);
+            transition: 0.3s;
+        }
+        .glass-card:hover .stat-icon-box { 
+            background: var(--toyota-red); 
+            color: white;
+        }
+
+        /* Form Elements */
+        .form-control, .form-select {
+            background-color: var(--input-bg);
+            border: 1px solid #dee2e6;
+            color: var(--text-main);
+            border-radius: 6px;
+            padding: 0.8rem 1rem;
+            font-weight: 500;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #fff;
+            border-color: var(--toyota-red);
+            box-shadow: 0 0 0 3px rgba(235, 10, 30, 0.15);
+        }
+
+        /* Buttons */
+        .btn-toyota {
+            background: var(--toyota-red);
+            color: white;
+            border: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 4px; /* Square buttons */
+            padding: 0.8rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-toyota:hover {
+            background: #c20015;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(235, 10, 30, 0.3);
+        }
+        
+        .btn-filter {
+            border: 1px solid #dee2e6;
+            color: var(--text-muted);
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        .btn-filter:hover { border-color: var(--toyota-red); color: var(--toyota-red); background: white; }
+
+        /* Table */
+        .table th {
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-bottom: 2px solid var(--toyota-red);
+        }
+        .table td { vertical-align: middle; font-weight: 500; }
+        
+        /* Status Badges */
+        .badge-toyota {
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-available { background: #e6fcf5; color: #0ca678; border: 1px solid #0ca678; }
+        .badge-sold { background: #f8f9fa; color: #495057; border: 1px solid #495057; text-decoration: line-through; }
+        .badge-transit { background: #fff5f5; color: var(--toyota-red); border: 1px solid var(--toyota-red); }
+
+        /* Activity Feed */
+        .activity-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid #f1f3f5;
+        }
+        .activity-icon {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem;
+            margin-right: 1rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+                <!-- Toyota Logo SVG -->
+                <svg width="40" height="35" viewBox="0 0 100 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 8C70 8 88 15 88 25C88 35 70 42 50 42C30 42 12 35 12 25C12 15 30 8 50 8ZM50 0C22.4 0 0 11.2 0 25C0 38.8 22.4 50 50 50C77.6 50 100 38.8 100 25C100 11.2 77.6 0 50 0ZM50 13C62 13 72 16 72 20C72 24 62 27 50 27C38 27 28 24 28 20C28 16 38 13 50 13Z" fill="#EB0A1E"/>
+                    <ellipse cx="50" cy="20" rx="10" ry="20" fill="#EB0A1E"/> <!-- Stylized vertical oval -->
+                </svg>
+                <span>TOYOTA <span class="fw-light">DEALER CONNECT</span></span>
+            </a>
+            
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-none d-md-block text-end me-2">
+                    <div class="fw-bold text-dark">North America Ops</div>
+                    <div class="text-muted text-small">Region: West Coast</div>
+                </div>
+                <button class="btn btn-light rounded-circle shadow-sm" style="width: 40px; height: 40px;">
+                    <i class="fa-solid fa-bell text-muted"></i>
+                </button>
+                <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
+                    TM
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4 mt-4">
+        
+        <!-- Header / Spotlight -->
+        <div class="row mb-4 animate-in">
+            <div class="col-12">
+                <div class="glass-card showroom-card p-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase text-danger mb-1 fw-bold">Featured Arrival</h6>
+                        <h2 class="mb-2">2025 GR SUPRA 3.0 PREMIUM</h2>
+                        <p class="mb-3 opacity-75">Stratosphere Blue • Manual Transmission • Available for Test Drive</p>
+                        <button class="btn btn-outline-light btn-sm px-4 rounded-0 fw-bold">VIEW DETAILS</button>
+                    </div>
+                    <div class="d-none d-md-block text-end pe-4">
+                        <i class="fa-solid fa-car-sport showroom-graphic"></i> <!-- Graphic Element -->
+                        <h1 class="display-3 fw-black fst-italic m-0" style="opacity: 0.2;">GR</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Stats Row -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-3 animate-in delay-1">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted text-small text-uppercase fw-bold">Stock Count</span>
+                        <div class="stat-icon-box">
+                            <i class="fa-solid fa-warehouse"></i>
+                        </div>
+                    </div>
+                    <h2 class="mb-0" id="stat-inventory">...</h2>
+                    <small class="text-success fw-bold"><i class="fa-solid fa-arrow-up"></i> 12 Units</small>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6 mb-3 animate-in delay-1">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted text-small text-uppercase fw-bold">Mo. Deliveries</span>
+                        <div class="stat-icon-box">
+                            <i class="fa-solid fa-key"></i>
+                        </div>
+                    </div>
+                    <h2 class="mb-0" id="stat-sold">...</h2>
+                    <small class="text-toyota-red fw-bold">Target: 150</small>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-3 animate-in delay-2">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted text-small text-uppercase fw-bold">ToyotaCare Appts</span>
+                        <div class="stat-icon-box">
+                            <i class="fa-solid fa-screwdriver-wrench"></i>
+                        </div>
+                    </div>
+                    <h2 class="mb-0">28</h2>
+                    <small class="text-warning fw-bold">High Volume Today</small>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-3 animate-in delay-2">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted text-small text-uppercase fw-bold">Gross Sales</span>
+                        <div class="stat-icon-box">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <h2 class="mb-0">$2.4M</h2>
+                    <small class="text-success fw-bold">+8% vs Prev Mo.</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            
+            <!-- LEFT COLUMN: INVENTORY & CHART -->
+            <div class="col-lg-8">
+                
+                <!-- Chart Section -->
+                <div class="glass-card p-4 mb-4 animate-in delay-2">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="mb-0 fw-bold">Sales Performance (Camry vs RAV4)</h5>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary active">Week</button>
+                            <button class="btn btn-outline-secondary">Month</button>
+                        </div>
+                    </div>
+                    <div style="height: 280px; width: 100%;">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Inventory Table -->
+                <div class="glass-card p-4 mb-4 animate-in delay-3">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="mb-0 fw-bold">Allocated Inventory</h5>
+                        <div class="d-flex gap-2">
+                            <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search VIN or Model..." style="width: 250px;">
+                            <button class="btn btn-filter btn-sm"><i class="fa-solid fa-filter"></i> Filter</button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Model Details</th>
+                                    <th>VIN</th>
+                                    <th>MSRP</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTable">
+                                <!-- JS will populate this -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: ACTIONS & ACTIVITY -->
+            <div class="col-lg-4">
+                
+                <!-- Quick Add Form -->
+                <div class="glass-card p-4 mb-4 animate-in delay-2" style="border-top: 4px solid var(--toyota-red);">
+                    <h5 class="mb-3 fw-bold">Dealer Trade / Intake</h5>
+                    <form id="addVehicleForm">
+                        <div class="row g-2 mb-3">
+                            <div class="col-4">
+                                <label class="text-muted text-small fw-bold">Year</label>
+                                <input type="number" class="form-control" placeholder="2025" id="inYear" required>
+                            </div>
+                            <div class="col-8">
+                                <label class="text-muted text-small fw-bold">Series</label>
+                                <select class="form-select" id="inModel">
+                                    <option value="Camry XSE">Camry XSE</option>
+                                    <option value="RAV4 Prime">RAV4 Prime</option>
+                                    <option value="Tacoma TRD">Tacoma TRD</option>
+                                    <option value="Tundra Capstone">Tundra Capstone</option>
+                                    <option value="Prius LE">Prius LE</option>
+                                    <option value="GR Supra">GR Supra</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-12">
+                                <label class="text-muted text-small fw-bold">MSRP</label>
+                                <input type="number" class="form-control" placeholder="0.00" id="inPrice" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-toyota w-100">
+                            Process Intake <i class="fa-solid fa-chevron-right ms-2"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Live Activity Feed -->
+                <div class="glass-card p-4 animate-in delay-3" style="max-height: 500px; overflow-y: auto;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0 fw-bold">Floor Updates</h5>
+                        <div class="spinner-grow text-danger spinner-grow-sm" role="status"></div>
+                    </div>
+                    
+                    <div id="activityFeed">
+                        <!-- Feed Items -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATA STORE (TOYOTA SPECIFIC) ---
+        const store = {
+            inventory: [
+                { id: 1, year: 2024, model: 'Tacoma TRD Pro', type: 'Truck', vin: '3TM-9921', price: 54900, status: 'Available' },
+                { id: 2, year: 2025, model: 'Camry XSE', type: 'Sedan', vin: '4T1-8842', price: 38500, status: 'In Transit' },
+                { id: 3, year: 2024, model: 'RAV4 Prime', type: 'SUV', vin: 'JTM-3321', price: 47200, status: 'Available' },
+                { id: 4, year: 2024, model: 'GR Supra 3.0', type: 'Sport', vin: 'WBS-1102', price: 61000, status: 'Available' },
+                { id: 5, year: 2024, model: 'Tundra 1794', type: 'Truck', vin: '5TF-5591', price: 68500, status: 'Sold' },
+                { id: 6, year: 2024, model: 'Prius Limited', type: 'Hybrid', vin: 'JTDK-441', price: 34500, status: 'Available' },
+            ],
+            activities: [
+                { id: 1, text: 'Sale Finalized: 2024 Tundra 1794', user: 'Sales: M. Ross', time: '12 mins ago', icon: 'fa-file-signature', color: 'bg-dark' },
+                { id: 2, text: 'Inventory Arrived: Tacoma TRD', user: 'System', time: '45 mins ago', icon: 'fa-truck-ramp-box', color: 'bg-danger' },
+                { id: 3, text: 'Test Drive: GR Supra (Stock #1102)', user: 'Sales: S. Lee', time: '2 hrs ago', icon: 'fa-road', color: 'bg-secondary' },
+                { id: 4, text: 'Service Complete: RAV4 Hybrid', user: 'Service Bay 3', time: '3 hrs ago', icon: 'fa-check', color: 'bg-success' }
+            ]
+        };
+
+        // --- RENDER FUNCTIONS ---
+        
+        function renderStats() {
+            document.getElementById('stat-inventory').innerText = store.inventory.length;
+            const soldCount = store.inventory.filter(c => c.status === 'Sold').length + 142; 
+            document.getElementById('stat-sold').innerText = soldCount;
+        }
+
+        function renderInventory() {
+            const tbody = document.getElementById('inventoryTable');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            tbody.innerHTML = '';
+
+            const filtered = store.inventory.filter(car => 
+                car.model.toLowerCase().includes(search) || 
+                car.vin.toLowerCase().includes(search)
+            );
+
+            filtered.forEach(car => {
+                let badge = 'badge-available';
+                if(car.status === 'Sold') badge = 'badge-sold';
+                if(car.status === 'In Transit') badge = 'badge-transit';
+
+                let iconClass = 'fa-car-side';
+                if(car.type === 'Truck') iconClass = 'fa-truck-pickup';
+                if(car.type === 'SUV') iconClass = 'fa-van-shuttle';
+
+                const row = `
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="me-3 text-danger"><i class="fa-solid ${iconClass} fa-lg"></i></div>
+                            <div>
+                                <div class="fw-bold text-dark">${car.year} Toyota ${car.model}</div>
+                                <div class="text-small text-muted">${car.type}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="font-monospace text-muted small">${car.vin}</td>
+                    <td class="fw-bold">$${car.price.toLocaleString()}</td>
+                    <td><span class="badge-toyota ${badge}">${car.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-light border" onclick="deleteCar(${car.id})"><i class="fa-solid fa-trash text-danger"></i></button>
+                    </td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function renderActivity() {
+            const container = document.getElementById('activityFeed');
+            container.innerHTML = '';
+            store.activities.forEach(act => {
+                const item = `
+                <div class="activity-item d-flex align-items-start">
+                    <div class="activity-icon ${act.color} text-white shadow-sm flex-shrink-0">
+                        <i class="fa-solid ${act.icon}"></i>
+                    </div>
+                    <div class="w-100">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-dark fw-bold text-small">${act.text}</span>
+                            <span class="text-muted" style="font-size: 0.7rem;">${act.time}</span>
+                        </div>
+                        <div class="text-muted text-small mt-1">${act.user}</div>
+                    </div>
+                </div>`;
+                container.innerHTML += item;
+            });
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Camry',
+                        data: [2, 3, 1, 4, 2, 5, 3],
+                        backgroundColor: '#EB0A1E',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'RAV4',
+                        data: [4, 2, 5, 3, 6, 8, 5],
+                        backgroundColor: '#333333',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f3f5' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // --- ACTIONS ---
+
+        document.getElementById('addVehicleForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const year = document.getElementById('inYear').value;
+            const model = document.getElementById('inModel').value;
+            const price = document.getElementById('inPrice').value;
+            
+            // Determine type based on model string
+            let type = 'Sedan';
+            if(model.includes('RAV4') || model.includes('Highlander')) type = 'SUV';
+            if(model.includes('Tacoma') || model.includes('Tundra')) type = 'Truck';
+            if(model.includes('Supra')) type = 'Sport';
+
+            const newCar = {
+                id: Date.now(),
+                year, model, type,
+                price: parseInt(price),
+                vin: `NEW-${Math.floor(Math.random()*10000)}`,
+                status: 'Available'
+            };
+            store.inventory.unshift(newCar);
+
+            const newAct = {
+                id: Date.now(),
+                text: `Dealer Trade In: ${year} ${model}`,
+                user: 'Admin',
+                time: 'Just now',
+                icon: 'fa-plus',
+                color: 'bg-danger'
+            };
+            store.activities.unshift(newAct);
+
+            e.target.reset();
+            renderInventory();
+            renderActivity();
+            renderStats();
+        });
+
+        window.deleteCar = function(id) {
+            if(confirm('Remove vehicle from allocation?')) {
+                store.inventory = store.inventory.filter(c => c.id !== id);
+                renderInventory();
+                renderStats();
+            }
+        };
+
+        document.getElementById('searchInput').addEventListener('keyup', renderInventory);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderStats();
+            renderInventory();
+            renderActivity();
+            initChart();
+        });
+
+    </script>
+</body>
+</html>
